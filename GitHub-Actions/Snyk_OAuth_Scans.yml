@@ -57,6 +57,19 @@ jobs:
           
           echo "SNYK_OAUTH_TOKEN=$access_token" >> $GITHUB_ENV
 
+      - name: Install Node.js dependencies
+        run: |
+          find . -name "package.json" -not -path "*/node_modules/*" -execdir npm ci \;
+
+      - name: Install all Python dependencies
+        run: |
+          find . -name "requirements.txt" -not -path "*/venv/*" | while read req; do
+            project_dir=$(dirname "$req")
+            python3 -m venv "$project_dir/venv"
+            source "$project_dir/venv/bin/activate"
+            pip install -r "$req"
+          done
+
       - name: Run Snyk SCA Scan
         run: snyk test --severity-threshold=high --json-file-output=results-sca.json || true
         env:
