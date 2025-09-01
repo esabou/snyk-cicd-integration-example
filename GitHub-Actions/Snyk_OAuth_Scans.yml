@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq
+          sudo apt-get install -y jq python3 python3-venv python3-pip
           npm install -g snyk snyk-to-html
 
       - name: Rotate Service Account and Get Access Token
@@ -57,6 +57,17 @@ jobs:
           
           echo "SNYK_OAUTH_TOKEN=$access_token" >> $GITHUB_ENV
 
+      - name: Install Python dependencies
+        if: ${{ exists('requirements.txt') }}
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Install Node.js dependencies
+        if: ${{ exists('package.json') }}
+        run: npm ci
+        
       - name: Run Snyk SCA Scan
         run: snyk test --severity-threshold=high --json-file-output=results-sca.json || true
         env:
